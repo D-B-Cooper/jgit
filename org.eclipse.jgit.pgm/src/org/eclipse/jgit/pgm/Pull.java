@@ -47,7 +47,7 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
 
-@Command(common = true, usage = "usage_PullChangesFromRemoteRepositories")
+@Command(common = true, usage = "usage_pullChangesFromRemoteRepositories")
 class Pull extends TextBuiltin {
 	
 	//Will default to "origin"
@@ -90,6 +90,12 @@ class Pull extends TextBuiltin {
 			pull.setRebase(pullRebaseMode);
 			
 			outw.println("Pull Added: " + pull.getRemote() + ",   " + ff.toString() + ",   " + pullRebaseMode.toString());
+			try {
+			pull.call();
+			} catch (Exception e) {
+				outw.println("Failure:  " + e.toString());
+			}
+			outw.println("Success");
 		} catch ( IOException e) {
 			throw die(e.getMessage(), e);
 		}
