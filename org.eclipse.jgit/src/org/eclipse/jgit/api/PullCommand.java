@@ -2,6 +2,7 @@
  * Copyright (C) 2010, Christian Halstrick <christian.halstrick@sap.com>
  * Copyright (C) 2010, Mathias Kinzler <mathias.kinzler@sap.com>
  * Copyright (C) 2016, Laurent Delaigue <laurent.delaigue@obeo.fr> and others
+ * Editted 2020, Ian Mahaffy
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Distribution License v. 1.0 which is available at
@@ -63,7 +64,7 @@ public class PullCommand extends TransportCommand<PullCommand, PullResult> {
 
 	private BranchRebaseMode pullRebaseMode = null;
 
-	private String remote;
+	private String remote; //= Constants.DEFAULT_REMOTE_NAME;
 
 	private String remoteBranchName;
 

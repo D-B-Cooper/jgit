@@ -24,6 +24,7 @@ org.eclipse.jgit.pgm.LsRemote
 org.eclipse.jgit.pgm.LsTree
 org.eclipse.jgit.pgm.Merge
 org.eclipse.jgit.pgm.MergeBase
+org.eclipse.jgit.pgm.Pull
 org.eclipse.jgit.pgm.Push
 org.eclipse.jgit.pgm.ReceivePack
 org.eclipse.jgit.pgm.Reflog
@@ -37,6 +38,7 @@ org.eclipse.jgit.pgm.Show
 org.eclipse.jgit.pgm.ShowRef
 org.eclipse.jgit.pgm.Status
 org.eclipse.jgit.pgm.Tag
+org.eclipse.jgit.pgm.TestMe
 org.eclipse.jgit.pgm.UploadPack
 org.eclipse.jgit.pgm.Version
 
