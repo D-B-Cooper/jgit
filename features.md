@@ -6,6 +6,6 @@
    - Implement rebase functionality
    - Update Docs
   #### Story B - Add Merges Capability to Rebase
-    - Update "merges" option to rebase (BranchRebaseMode)
-    - Implement functionality where command is used
-    - Update Docs
+   - Update "merges" option to rebase (BranchRebaseMode)
+   - Implement functionality where command is used
+   - Update Docs
