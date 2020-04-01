@@ -54,6 +54,10 @@ class Pull extends TextBuiltin {
 	@Argument(index = 0, metaVar = "metaVar_uriish")
 	private String remote = Constants.DEFAULT_REMOTE_NAME;
 	
+	//Will default to "origin"
+	@Argument(index = 1, metaVar = "metaVar_uriish")
+	private String remoteBranchName = null;
+	
 	private BranchRebaseMode pullRebaseMode = BranchRebaseMode.NONE;
 	
 	@Option(name = "--rebase", aliases = { "-r" })
@@ -80,8 +84,7 @@ class Pull extends TextBuiltin {
 	
 	/** {@inheritDoc} */
 	@Override
-	protected void run() throws IOException {		
-		outw.println("Pull Added: " + remote);
+	protected void run() throws IOException {
 		
 		try(Git git = new Git(db)) {
 			PullCommand pull = git.pull();
@@ -89,13 +92,19 @@ class Pull extends TextBuiltin {
 			pull.setFastForward(ff);
 			pull.setRebase(pullRebaseMode);
 			
-			outw.println("Pull Added: " + pull.getRemote() + ",   " + ff.toString() + ",   " + pullRebaseMode.toString());
+			if(remoteBranchName != null)
+				pull.setRemoteBranchName(remoteBranchName);
+			
+//			outw.println("Pull Added: " + pull.getRemote() + ",   " + ff.toString() + ",   " + pullRebaseMode.toString());
+//			if(remoteBranchName != null)
+//				outw.println("Remote branch: " + remoteBranchName);
+			
 			try {
 			pull.call();
 			} catch (Exception e) {
 				outw.println("Failure:  " + e.toString());
 			}
-			outw.println("Success");
+//			outw.println("Success");
 		} catch ( IOException e) {
 			throw die(e.getMessage(), e);
 		}
