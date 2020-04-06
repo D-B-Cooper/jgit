@@ -27,16 +27,23 @@ import java.util.Map;
 //import java.util.List;
 //
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
+import org.eclipse.jgit.api.MergeResult;
 //import org.eclipse.jgit.api.MergeCommand.FastForwardMode.Merge;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchConfig.BranchRebaseMode;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.pgm.internal.CLIText;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
+import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 //import org.eclipse.jgit.lib.Ref;
 //import org.eclipse.jgit.lib.TextProgressMonitor;
 //import org.eclipse.jgit.pgm.internal.CLIText;
@@ -58,7 +65,6 @@ class Pull extends TextBuiltin {
 	@Argument(index = 0, metaVar = "metaVar_uriish")
 	private String remote = Constants.DEFAULT_REMOTE_NAME;
 
-	//Will default to "origin"
 	@Argument(index = 1, metaVar = "metaVar_uriish")
 	private String remoteBranchName = null;
 
@@ -86,6 +92,10 @@ class Pull extends TextBuiltin {
 		ff = FastForwardMode.FF_ONLY;
 	}
 
+	private MergeStrategy mergeStrategy = MergeStrategy.RECURSIVE;
+
+	private String ref;
+
 	/** {@inheritDoc} */
 	@Override
 	protected void run() throws IOException {
@@ -99,8 +109,9 @@ class Pull extends TextBuiltin {
 			if(remoteBranchName != null)
 				pull.setRemoteBranchName(remoteBranchName);
 
-
 			PullResult results = pull.call();
+			// sets the ref variable
+			ref = pull.getRemote() + "/" + pull.getRemoteBranchName(); //$NON-NLS-1$
 			printPullResult(results);
 
 
@@ -117,16 +128,11 @@ class Pull extends TextBuiltin {
 	 */
 	@SuppressWarnings("nls")
 	private void printPullResult(final PullResult results) throws IOException {
-		// outw.println(
-		// results.toString() + "\n end \n" + results.isSuccessful());
-
-		// printTest(results);
 		if (!results.isSuccessful()) {
-			outw.println(getPullErrors(results));
+			getPullErrors(results);
 			return;
 		}
 		outw.println();
-		StringBuilder sb = new StringBuilder();
 
 		outw.println(MessageFormat.format(CLIText.get().fromURI,
 				results.getFetchResult().getURI().toString()));
@@ -139,17 +145,19 @@ class Pull extends TextBuiltin {
 			outw.format("	%-10s -> %s", src, dst);
 			outw.println();
 		}
-		// Add Merge status to SB
-		sb.append(results.getMergeResult().getMergeStatus().toString());
-		sb.append("Pull Successful");
-		outw.println(sb.toString());
-		// printTest(results);
+
+		// Print Merge results
+		try {
+			printMergeResults(results.getMergeResult());
+		} catch (Exception e) {
+			outw.println("Error: " + e.toString());
+		}
+		outw.println("Pull Successful");
 
 	}
 
 	@SuppressWarnings("nls")
-	private String getPullErrors(final PullResult results) throws IOException {
-		StringBuilder sb = new StringBuilder();
+	private void getPullErrors(final PullResult results) throws IOException {
 
 		if (results.getFetchResult().getURI() != null)
 			outw.println(MessageFormat.format(CLIText.get().fromURI,
@@ -166,142 +174,111 @@ class Pull extends TextBuiltin {
 		}
 		// Print Merge results
 		if (results.getMergeResult().getMergeStatus() != null) {
-			// if (results.getMergeResult().getMergeStatus()
-			// .toString() == "Failed") {
-			// outw.println(CLIText.get().mergeFailed);
-			// if (results.getMergeResult().getFailingPaths() != null)
-			// outw.println("Problem with files: " + results
-			// .getMergeResult().getFailingPaths().toString());
-			// outw.println(results.getMergeResult().getMergeStatus().);
-			// }
-			for (Map.Entry<String, MergeFailureReason> entry : results
-					.getMergeResult().getFailingPaths().entrySet())
+			printMergeResults(results.getMergeResult());
+		}
+
+	}
+
+	/**
+	 * Code pulled from Merge.java
+	 *
+	 * @param result
+	 *            MergeResult to be referenced
+	 */
+	private void printMergeResults(MergeResult result) {
+		try {
+			// final Ref srcRef = db.findRef(ref);
+		final ObjectId src = db.resolve(ref + "^{commit}"); //$NON-NLS-1$
+		if (src == null) {
+			throw die(MessageFormat
+					.format(CLIText.get().refDoesNotExistOrNoCommit, ref));
+		}
+		Ref oldHead = db.exactRef(Constants.HEAD);
+		if (oldHead == null) {
+			throw die(CLIText.get().onBranchToBeBorn);
+		}
+		switch (result.getMergeStatus()) {
+		case ALREADY_UP_TO_DATE:
+			outw.println(CLIText.get().alreadyUpToDate);
+			break;
+		case FAST_FORWARD:
+			ObjectId oldHeadId = oldHead.getObjectId();
+			if (oldHeadId != null) {
+				String oldId = oldHeadId.abbreviate(7).name();
+				String newId = result.getNewHead().abbreviate(7).name();
+				outw.println(MessageFormat.format(CLIText.get().updating, oldId,
+						newId));
+			}
+			outw.println(result.getMergeStatus().toString());
+			break;
+		case CHECKOUT_CONFLICT:
+			outw.println(CLIText.get().mergeCheckoutConflict);
+			for (String collidingPath : result.getCheckoutConflicts()) {
+				outw.println("\t" + collidingPath); //$NON-NLS-1$
+			}
+			outw.println(CLIText.get().mergeCheckoutFailed);
+			break;
+		case CONFLICTING:
+			for (String collidingPath : result.getConflicts().keySet())
+				outw.println(MessageFormat.format(CLIText.get().mergeConflict,
+						collidingPath));
+			outw.println(CLIText.get().mergeFailed);
+			break;
+		case FAILED:
+			for (Map.Entry<String, MergeFailureReason> entry : result
+					.getFailingPaths().entrySet())
 				switch (entry.getValue()) {
 				case DIRTY_WORKTREE:
 				case DIRTY_INDEX:
 					outw.println(CLIText.get().dontOverwriteLocalChanges);
-					outw.println("        " + entry.getKey());
+					outw.println("        " + entry.getKey()); //$NON-NLS-1$
+						outw.println("Commit your local changes"); //$NON-NLS-1$
 					break;
 				case COULD_NOT_DELETE:
 					outw.println(CLIText.get().cannotDeleteFile);
-					outw.println("        " + entry.getKey());
+					outw.println("        " + entry.getKey()); //$NON-NLS-1$
 					break;
 				}
-
-			outw.println("Merge Results: "
-					+ results.getMergeResult().getMergeStatus().toString()
-					+ "\n");
+			break;
+		case MERGED:
+			MergeStrategy strategy = isMergedInto(oldHead, src)
+					? MergeStrategy.RECURSIVE
+					: mergeStrategy;
+			outw.println(MessageFormat.format(CLIText.get().mergeMadeBy,
+					strategy.getName()));
+			break;
+		case MERGED_NOT_COMMITTED:
+			outw.println(CLIText.get().mergeWentWellStoppedBeforeCommitting);
+			break;
+		case MERGED_SQUASHED:
+		case FAST_FORWARD_SQUASHED:
+		case MERGED_SQUASHED_NOT_COMMITTED:
+			outw.println(CLIText.get().mergedSquashed);
+			outw.println(CLIText.get().mergeWentWellStoppedBeforeCommitting);
+			break;
+		case ABORTED:
+			throw die(CLIText.get().ffNotPossibleAborting);
+		case NOT_SUPPORTED:
+			outw.println(MessageFormat.format(
+					CLIText.get().unsupportedOperation, result.toString()));
 		}
-		// Print merge conflicts, if any
-		if (results.getMergeResult().getConflicts() != null)
-			outw.println("Merge conflict in the files:  "
-					+ results.getMergeResult().getConflicts().toString()
-					+ "\nAutomatic mergess failed; fix conflicts and then commit the results\n");
-		return sb.toString();
-
+		} catch (IOException e) {
+			throw die(e.getMessage(), e);
+		}
 	}
 
-	// @SuppressWarnings("nls")
-	// private void printTest(final PullResult results) throws IOException {
-	// if (results.getFetchResult() != null) {
-	// outw.println("\n\n********* FETCH RESULTS **************\n\n");
-	//
-	// for (TrackingRefUpdate u : results.getFetchResult()
-	// .getTrackingRefUpdates()) {
-	// final String src = abbreviateRef(u.getRemoteName(), false);
-	// final String dst = abbreviateRef(u.getLocalName(), true);
-	// outw.format(" %-10s -> %s", src, dst);
-	// outw.println();
-	// }
-	//
-	// outw.println("getFetchResult: " + results.getFetchResult());
-	//
-	// outw.println("getFetchResult.toString: "
-	// + results.getFetchResult().toString());
-	//
-	// outw.println("getFetchResult.getMessages: "
-	// + results.getFetchResult().getMessages());
-	//
-	// outw.println("getFetchResult.getTrackingRefUpdates().toString(): "
-	// + results.getFetchResult().getTrackingRefUpdates()
-	// .toString());
-	//
-	// outw.println("getFetchedFrom: " + results.getFetchedFrom() + "\n");
-	//
-	// }
-	//
-	// if (results.getMergeResult() != null) {
-	// outw.println("\n\n********* MERGE RESULTS **************\n\n");
-	//
-	// outw.println("getMergeResult: " + results.getMergeResult());
-	//
-	// outw.println("getMergeResult.toString: "
-	// + results.getMergeResult().toString());
-	// try {
-	// outw.println("getMergeResult.getMergedCommits: "
-	// + results.getMergeResult().getMergedCommits());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// try {
-	// outw.println(
-	// "getMergeResult.getMergeResult.getBase().toString(): "
-	// + results.getMergeResult().getBase()
-	// .toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	// try {
-	// outw.println(
-	// "getMergeResult.getMergeResult.getFailingPaths().toString(): "
-	// + results.getMergeResult().getFailingPaths()
-	// .toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// try {
-	// outw.println(
-	// "getMergeResult.getMergeResult.getMergeStatus().toString(): "
-	// + results.getMergeResult().getMergeStatus()
-	// .toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// try {
-	// outw.println("getMergeResult.getConflicts().toString(): "
-	// + results.getMergeResult().getConflicts().toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// try {
-	// outw.println("getMergeResult.getNewHead().toString(): "
-	// + results.getMergeResult().getNewHead().toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// try {
-	// outw.println(
-	// "getMergeResult.getCheckoutConflicts().toString(): "
-	// + results.getMergeResult()
-	// .getCheckoutConflicts().toString());
-	// } catch (Exception e) {
-	// outw.println("Exception caught: " + e.toString());
-	// }
-	//
-	// }
-	//
-	// if (results.getRebaseResult() != null) {
-	//
-	// outw.println("\n\n********* REBASE RESULTS **************\n\n");
-	//
-	// outw.println("Rebase: " + results.getRebaseResult() + "\n");
-	// }
-	//
-	// }
+	private boolean isMergedInto(Ref oldHead, AnyObjectId src)
+			throws IOException {
+		try (RevWalk revWalk = new RevWalk(db)) {
+			ObjectId oldHeadObjectId = oldHead.getPeeledObjectId();
+			if (oldHeadObjectId == null)
+				oldHeadObjectId = oldHead.getObjectId();
+			RevCommit oldHeadCommit = revWalk.lookupCommit(oldHeadObjectId);
+			RevCommit srcCommit = revWalk.lookupCommit(src);
+			return revWalk.isMergedInto(oldHeadCommit, srcCommit);
+		}
+	}
+
+
 }
 
