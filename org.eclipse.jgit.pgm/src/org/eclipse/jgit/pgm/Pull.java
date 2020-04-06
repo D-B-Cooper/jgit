@@ -19,7 +19,8 @@ package org.eclipse.jgit.pgm;
 
 //import static java.lang.Character.valueOf;
 import java.io.IOException;
-
+import java.text.MessageFormat;
+import java.util.Map;
 
 //import java.text.MessageFormat;
 //import java.util.ArrayList;
@@ -32,9 +33,10 @@ import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.BranchConfig.BranchRebaseMode;
+import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
+import org.eclipse.jgit.pgm.internal.CLIText;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.lib.Constants;
-//import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectReader;
 //import org.eclipse.jgit.lib.Ref;
 //import org.eclipse.jgit.lib.TextProgressMonitor;
 //import org.eclipse.jgit.pgm.internal.CLIText;
@@ -46,6 +48,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 //import org.eclipse.jgit.transport.URIish;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
+
 
 
 @Command(common = true, usage = "usage_pullChangesFromRemoteRepositories")
@@ -98,63 +101,207 @@ class Pull extends TextBuiltin {
 
 
 			PullResult results = pull.call();
-				try (ObjectReader reader = db.newObjectReader()) {
-					//printPullResult(reader, result.getURI(), result);
-				outw.println("Output:  " + results.toString()); //$NON-NLS-1$
-				if (results.getFetchResult() != null)
-					outw.println("Fetch:  " + results.getFetchResult() + "\n"); //$NON-NLS-1$//$NON-NLS-2$
-				if (results.getMergeResult() != null)
-					outw.println("Merge:  " + results.getMergeResult() + "\n"); //$NON-NLS-1$//$NON-NLS-2$
-				if (results.getRebaseResult() != null)
-					outw.println(
-							"Rebase:  " + results.getRebaseResult() + "\n"); //$NON-NLS-1$//$NON-NLS-2$
-			} catch ( IOException e) {
-			throw die(e.getMessage(), e);
-			}
+			printPullResult(results);
 
 
-//			try {
-//			pull.call();
-//			} catch (Exception e) {
-//				outw.println("Failure:  " + e.toString());
-//			}
-		} catch (GitAPIException e) {
-			throw die(e.getMessage(), e);
-		}
+	} catch (GitAPIException e) {
+		throw die(e.getMessage(), e);
+	}
 	}
 
-//	private void printPullResult(final ObjectReader reader, //final URIish uri,
-//			final PullResult result) throws IOException {
-//		shownURI = false;
-//		boolean everythingUpToDate = true;
-//
-//
-//
-//
-//		// at first, print up-to-date ones...
-//		for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
-//			if (rru.getStatus() == Status.UP_TO_DATE) {
-//				if (verbose)
-//					printRefUpdateResult(reader, uri, result, rru);
-//			} else
-//				everythingUpToDate = false;
-//		}
-//
-//		for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
-//			// ...then successful updates...
-//			if (rru.getStatus() == Status.OK)
-//				printRefUpdateResult(reader, uri, result, rru);
-//		}
-//
-//		for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
-//			// ...finally, others (problematic)
-//			if (rru.getStatus() != Status.OK
-//					&& rru.getStatus() != Status.UP_TO_DATE)
-//				printRefUpdateResult(reader, uri, result, rru);
-//		}
-//
-//		AbstractFetchCommand.showRemoteMessages(errw, result.getMessages());
-//		if (everythingUpToDate)
-//			outw.println(CLIText.get().everythingUpToDate);
-//	}
+	/**
+	 *
+	 * @param results
+	 *            PullResult to be printed
+	 * @throws IOException
+	 */
+	@SuppressWarnings("nls")
+	private void printPullResult(final PullResult results) throws IOException {
+		// outw.println(
+		// results.toString() + "\n end \n" + results.isSuccessful());
+
+		// printTest(results);
+		if (!results.isSuccessful()) {
+			outw.println(getPullErrors(results));
+			return;
+		}
+		outw.println();
+		StringBuilder sb = new StringBuilder();
+
+		outw.println(MessageFormat.format(CLIText.get().fromURI,
+				results.getFetchResult().getURI().toString()));
+
+		// Prints out a visual for the fetch path
+		for (TrackingRefUpdate u : results.getFetchResult()
+				.getTrackingRefUpdates()) {
+			final String src = abbreviateRef(u.getRemoteName(), false);
+			final String dst = abbreviateRef(u.getLocalName(), true);
+			outw.format("	%-10s -> %s", src, dst);
+			outw.println();
+		}
+		// Add Merge status to SB
+		sb.append(results.getMergeResult().getMergeStatus().toString());
+		sb.append("Pull Successful");
+		outw.println(sb.toString());
+		// printTest(results);
+
+	}
+
+	@SuppressWarnings("nls")
+	private String getPullErrors(final PullResult results) throws IOException {
+		StringBuilder sb = new StringBuilder();
+
+		if (results.getFetchResult().getURI() != null)
+			outw.println(MessageFormat.format(CLIText.get().fromURI,
+					results.getFetchResult().getURI().toString()));
+		else
+			outw.println("No URI found for Fetch Result\n");
+
+		for (TrackingRefUpdate u : results.getFetchResult()
+				.getTrackingRefUpdates()) {
+			final String src = abbreviateRef(u.getRemoteName(), false);
+			final String dst = abbreviateRef(u.getLocalName(), true);
+			outw.format(" %-10s -> %s", src, dst);
+			outw.println();
+		}
+		// Print Merge results
+		if (results.getMergeResult().getMergeStatus() != null) {
+			// if (results.getMergeResult().getMergeStatus()
+			// .toString() == "Failed") {
+			// outw.println(CLIText.get().mergeFailed);
+			// if (results.getMergeResult().getFailingPaths() != null)
+			// outw.println("Problem with files: " + results
+			// .getMergeResult().getFailingPaths().toString());
+			// outw.println(results.getMergeResult().getMergeStatus().);
+			// }
+			for (Map.Entry<String, MergeFailureReason> entry : results
+					.getMergeResult().getFailingPaths().entrySet())
+				switch (entry.getValue()) {
+				case DIRTY_WORKTREE:
+				case DIRTY_INDEX:
+					outw.println(CLIText.get().dontOverwriteLocalChanges);
+					outw.println("        " + entry.getKey());
+					break;
+				case COULD_NOT_DELETE:
+					outw.println(CLIText.get().cannotDeleteFile);
+					outw.println("        " + entry.getKey());
+					break;
+				}
+
+			outw.println("Merge Results: "
+					+ results.getMergeResult().getMergeStatus().toString()
+					+ "\n");
+		}
+		// Print merge conflicts, if any
+		if (results.getMergeResult().getConflicts() != null)
+			outw.println("Merge conflict in the files:  "
+					+ results.getMergeResult().getConflicts().toString()
+					+ "\nAutomatic mergess failed; fix conflicts and then commit the results\n");
+		return sb.toString();
+
+	}
+
+	// @SuppressWarnings("nls")
+	// private void printTest(final PullResult results) throws IOException {
+	// if (results.getFetchResult() != null) {
+	// outw.println("\n\n********* FETCH RESULTS **************\n\n");
+	//
+	// for (TrackingRefUpdate u : results.getFetchResult()
+	// .getTrackingRefUpdates()) {
+	// final String src = abbreviateRef(u.getRemoteName(), false);
+	// final String dst = abbreviateRef(u.getLocalName(), true);
+	// outw.format(" %-10s -> %s", src, dst);
+	// outw.println();
+	// }
+	//
+	// outw.println("getFetchResult: " + results.getFetchResult());
+	//
+	// outw.println("getFetchResult.toString: "
+	// + results.getFetchResult().toString());
+	//
+	// outw.println("getFetchResult.getMessages: "
+	// + results.getFetchResult().getMessages());
+	//
+	// outw.println("getFetchResult.getTrackingRefUpdates().toString(): "
+	// + results.getFetchResult().getTrackingRefUpdates()
+	// .toString());
+	//
+	// outw.println("getFetchedFrom: " + results.getFetchedFrom() + "\n");
+	//
+	// }
+	//
+	// if (results.getMergeResult() != null) {
+	// outw.println("\n\n********* MERGE RESULTS **************\n\n");
+	//
+	// outw.println("getMergeResult: " + results.getMergeResult());
+	//
+	// outw.println("getMergeResult.toString: "
+	// + results.getMergeResult().toString());
+	// try {
+	// outw.println("getMergeResult.getMergedCommits: "
+	// + results.getMergeResult().getMergedCommits());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// try {
+	// outw.println(
+	// "getMergeResult.getMergeResult.getBase().toString(): "
+	// + results.getMergeResult().getBase()
+	// .toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	// try {
+	// outw.println(
+	// "getMergeResult.getMergeResult.getFailingPaths().toString(): "
+	// + results.getMergeResult().getFailingPaths()
+	// .toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// try {
+	// outw.println(
+	// "getMergeResult.getMergeResult.getMergeStatus().toString(): "
+	// + results.getMergeResult().getMergeStatus()
+	// .toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// try {
+	// outw.println("getMergeResult.getConflicts().toString(): "
+	// + results.getMergeResult().getConflicts().toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// try {
+	// outw.println("getMergeResult.getNewHead().toString(): "
+	// + results.getMergeResult().getNewHead().toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// try {
+	// outw.println(
+	// "getMergeResult.getCheckoutConflicts().toString(): "
+	// + results.getMergeResult()
+	// .getCheckoutConflicts().toString());
+	// } catch (Exception e) {
+	// outw.println("Exception caught: " + e.toString());
+	// }
+	//
+	// }
+	//
+	// if (results.getRebaseResult() != null) {
+	//
+	// outw.println("\n\n********* REBASE RESULTS **************\n\n");
+	//
+	// outw.println("Rebase: " + results.getRebaseResult() + "\n");
+	// }
+	//
+	// }
 }
+
