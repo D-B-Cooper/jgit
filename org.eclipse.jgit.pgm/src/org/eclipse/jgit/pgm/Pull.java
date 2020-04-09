@@ -70,10 +70,11 @@ class Pull extends TextBuiltin {
 
 	private BranchRebaseMode pullRebaseMode = BranchRebaseMode.NONE;
 
-	@Option(name = "--rebase", aliases = { "-r" })
-	void pullRebaseMode(@SuppressWarnings("unused") final boolean ignored) {
-		pullRebaseMode = BranchRebaseMode.REBASE;
-	}
+	// TODO Uncomment after Rebase Implementation
+	// @Option(name = "--rebase", aliases = { "-r" })
+	// void pullRebaseMode(@SuppressWarnings("unused") final boolean ignored) {
+	// pullRebaseMode = BranchRebaseMode.REBASE;
+	// }
 
 	private FastForwardMode ff = FastForwardMode.FF;
 
@@ -91,6 +92,9 @@ class Pull extends TextBuiltin {
 	void ffonly(@SuppressWarnings("unused") final boolean ignored) {
 		ff = FastForwardMode.FF_ONLY;
 	}
+
+	@Option(name = "--test", aliases = { "-t" })
+	private boolean showTest;
 
 	private MergeStrategy mergeStrategy = MergeStrategy.RECURSIVE;
 
@@ -110,8 +114,16 @@ class Pull extends TextBuiltin {
 				pull.setRemoteBranchName(remoteBranchName);
 
 			PullResult results = pull.call();
+
 			// sets the ref variable
+			try {
 			ref = pull.getRemote() + "/" + pull.getRemoteBranchName(); //$NON-NLS-1$
+			} catch (Exception e) {
+				throw die(e.getMessage(), e);
+			}
+			if (showTest)
+				printTest(pull);
+
 			printPullResult(results);
 
 
@@ -121,6 +133,7 @@ class Pull extends TextBuiltin {
 	}
 
 	/**
+	 * Passed the PullResults of a PullCommand that has been called.
 	 *
 	 * @param results
 	 *            PullResult to be printed
@@ -128,11 +141,13 @@ class Pull extends TextBuiltin {
 	 */
 	@SuppressWarnings("nls")
 	private void printPullResult(final PullResult results) throws IOException {
+		if (showTest)
+			printTest(results);
+
 		if (!results.isSuccessful()) {
 			getPullErrors(results);
 			return;
 		}
-		outw.println();
 
 		outw.println(MessageFormat.format(CLIText.get().fromURI,
 				results.getFetchResult().getURI().toString()));
@@ -152,8 +167,6 @@ class Pull extends TextBuiltin {
 		} catch (Exception e) {
 			outw.println("Error: " + e.toString());
 		}
-		outw.println("Pull Successful");
-
 	}
 
 	@SuppressWarnings("nls")
@@ -187,7 +200,6 @@ class Pull extends TextBuiltin {
 	 */
 	private void printMergeResults(MergeResult result) {
 		try {
-			// final Ref srcRef = db.findRef(ref);
 		final ObjectId src = db.resolve(ref + "^{commit}"); //$NON-NLS-1$
 		if (src == null) {
 			throw die(MessageFormat
@@ -277,6 +289,113 @@ class Pull extends TextBuiltin {
 			RevCommit srcCommit = revWalk.lookupCommit(src);
 			return revWalk.isMergedInto(oldHeadCommit, srcCommit);
 		}
+	}
+
+	/*
+	 * Prints the information of the pull command
+	 */
+	@SuppressWarnings("nls")
+	private void printTest(final PullCommand pull) throws IOException {
+		outw.println(
+				"\n***************** Pull Command Details ***************\n");
+
+		StringBuilder enteredOptions = new StringBuilder();
+		enteredOptions.append("****** Entered Options *****\n");
+		if (remote != null)
+			enteredOptions.append("Remote:  " + remote + ";  ");
+		else
+			enteredOptions.append("Remote:  !RETURNED NULL;  ");
+
+		if (remoteBranchName != null)
+			enteredOptions
+					.append("Remote Branch:  " + remoteBranchName + ";  ");
+		else
+			enteredOptions.append(
+					"Remote Branch:  !RETURNED NULL, default will be used;  ");
+
+		if (pullRebaseMode.toString() != null)
+			enteredOptions
+					.append("Rebase Mode: " + pullRebaseMode.toString() + "; ");
+		else
+			enteredOptions.append("Rebase Mode: !RETURNED NULL; ");
+
+		if (ff != null)
+			enteredOptions
+					.append("Fast Forward Mode:  " + ff.toString() + ";  ");
+		else
+			enteredOptions.append("Fast Forward Mode:  !RETURNED NULL;  ");
+
+		if (mergeStrategy != null)
+			enteredOptions.append(
+					"Merge Strategy:  " + mergeStrategy.getName() + ";  ");
+		else
+			enteredOptions.append("Merge Strategy:  !RETURNED NULL;  ");
+
+		if (ref != null)
+			enteredOptions.append("Internal ref Variable:  " + ref + ";  ");
+		else
+			enteredOptions.append("Internal ref Variable:  !RETURNED NULL;  ");
+
+		enteredOptions.append("\n\n****************************\n");
+
+		outw.println(enteredOptions.toString());
+
+		if (pull.toString() != null)
+			outw.println("To String:  " + pull.toString());
+
+		if (pull.getRemote() != null)
+			outw.println("Remote:  " + pull.getRemote());
+		else
+			outw.println("Remote: NO REMOTE FOUND");
+
+		if (pull.getRemoteBranchName() != null)
+			outw.println("Remote Branch:   " + pull.getRemoteBranchName());
+		else
+			outw.println("Remote Branch:  NO REMOTE BRANCH FOUND");
+
+		outw.println(
+				"\n*****************************************************\n\n");
+
+	}
+
+	@SuppressWarnings("nls")
+	private void printTest(final PullResult results) throws IOException {
+		outw.println(
+				"\n***************** Pull Result Options ***************\n");
+
+		outw.println("Pull Results Successful:  " + results.isSuccessful());
+
+		if (results.toString() != null)
+			outw.println("ToString:  " + results.toString());
+		else
+			outw.println("ToString:   NONE FOUND");
+
+		if (results.getFetchResult() != null)
+			outw.println(
+					"Fetch Result:  " + results.getFetchResult().toString());
+		else
+			outw.println("Fetch Result:   NONE FOUND");
+
+		if (results.getFetchedFrom() != null)
+			outw.println("Fetched From:  " + results.getFetchedFrom());
+		else
+			outw.println("Fetched From:   NONE FOUND");
+
+		if (results.getMergeResult() != null)
+			outw.println(
+					"Merge Result:  " + results.getMergeResult().toString());
+		else
+			outw.println("Merge Result:   NONE FOUND");
+
+		if (results.getRebaseResult() != null)
+			outw.println(
+					"Rebase Result: " + results.getRebaseResult().toString());
+		else
+			outw.println("Rebase Result: NONE FOUND");
+
+		outw.println(
+				"\n*****************************************************\n\n");
+
 	}
 
 
