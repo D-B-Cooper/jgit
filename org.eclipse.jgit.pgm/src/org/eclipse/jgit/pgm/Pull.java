@@ -19,6 +19,7 @@ package org.eclipse.jgit.pgm;
 import java.io.IOException;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -94,6 +95,45 @@ class Pull extends TextBuiltin {
 	}
 
 	/**
+	 * Variable that holds the default fast forward mode. References: Req. 1.4
+	 */
+	private FastForwardMode ff = FastForwardMode.FF;
+
+	/**
+	 * Option to set the rebase mode to Fast Forward, which is default.
+	 * References: Req. 1.4
+	 *
+	 * @param ignored
+	 */
+	@Option(name = "--ff", usage = "usage_mergeFf")
+	void ff(@SuppressWarnings("unused")
+	final boolean ignored) {
+		ff = FastForwardMode.FF;
+	}
+
+	/**
+	 * Option to set the rebase mode to false. References: Req. 1.4
+	 *
+	 * @param ignored
+	 */
+	@Option(name = "--no-ff", usage = "usage_mergeNoFf")
+	void noff(@SuppressWarnings("unused")
+	final boolean ignored) {
+		ff = FastForwardMode.NO_FF;
+	}
+
+	/**
+	 * Option to set the rebase mode to Fast Forward Only. References: Req. 1.4
+	 *
+	 * @param ignored
+	 */
+	@Option(name = "--ff-only", usage = "usage_mergeFfOnly")
+	void ffonly(@SuppressWarnings("unused")
+	final boolean ignored) {
+		ff = FastForwardMode.FF_ONLY;
+	}
+
+	/**
 	 * Option to print out test output. References: Req. 1.2
 	 */
 	@Option(name = "--test", aliases = { "-t" })
@@ -107,7 +147,8 @@ class Pull extends TextBuiltin {
 
 	/**
 	 * Run method creates new pull using specified commands, and setting the
-	 * options accordingly. References: Req. 1.0, Req. 1.1, Req. 1.2, Req. 1.3
+	 * options accordingly. References: Req. 1.0, Req. 1.1, Req. 1.2, Req. 1.3,
+	 * Req. 1.4
 	 */
 	@Override
 	protected void run() throws IOException {
@@ -120,6 +161,7 @@ class Pull extends TextBuiltin {
 				pull.setRemoteBranchName(remoteBranchName);
 
 			pull.setRebase(pullRebaseMode);
+			pull.setFastForward(ff);
 
 			PullResult result = pull.call();
 
@@ -141,7 +183,7 @@ class Pull extends TextBuiltin {
 
 	/**
 	 * Prints the information of the pull command. Used for testing and
-	 * troubleshooting purposes. References: Req. 1.2, 1.3
+	 * troubleshooting purposes. References: Req. 1.2, 1.3, 1.4
 	 *
 	 * @param pull
 	 *            PullCommand to be examined and printed out
@@ -172,6 +214,12 @@ class Pull extends TextBuiltin {
 		else
 			enteredOptions.append("Rebase Mode: !RETURNED NULL; ");
 
+		if (ff != null)
+			enteredOptions
+					.append("Fast Forward Mode:  " + ff.toString() + ";  ");
+		else
+			enteredOptions.append("Fast Forward Mode:  !RETURNED NULL;  ");
+
 		if (ref != null)
 			enteredOptions.append("Internal ref Variable:  " + ref + ";  ");
 		else
@@ -200,7 +248,7 @@ class Pull extends TextBuiltin {
 
 	/**
 	 * Prints the information of the pull result. Used for testing and
-	 * troubleshooting purposes. References: Req. 1.2, 1.3
+	 * troubleshooting purposes. References: Req. 1.2, 1.3, 1.4
 	 *
 	 * @param results
 	 *            PullResult to be examined and printed out
