@@ -18,14 +18,45 @@ package org.eclipse.jgit.pgm;
 
 import java.io.IOException;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.kohsuke.args4j.Argument;
+
 @Command(common = true, usage = "usage_PullChangesFromRemoteRepositories")
 class Pull extends TextBuiltin {
 
 	/**
-	 * Run method to prove pull command is functional. References: Req. 1.0
+	 * Arguement for the remote repository. Will default to origin. References:
+	 * Req. 1.1
+	 */
+	@Argument(index = 0, metaVar = "metaVar_uriish")
+	private String remote = Constants.DEFAULT_REMOTE_NAME;
+
+	/**
+	 * Arguement for the remote branch. References: Req. 1.1
+	 */
+	@Argument(index = 1, metaVar = "metaVar_uriish")
+	private String remoteBranchName = null;
+
+	/**
+	 * Run method creates new pull using specified commands. References: Req.
+	 * 1.0, Req. 1.1
 	 */
 	@Override
 	protected void run() throws IOException {
-		System.out.println("Test");
+		try (Git git = new Git(db)) {
+			PullCommand pull = git.pull();
+			pull.setRemote(remote);
+
+			if (remoteBranchName != null)
+				pull.setRemoteBranchName(remoteBranchName);
+
+			pull.call();
+
+		} catch (GitAPIException e) {
+			throw die(e.getMessage(), e);
+		}
 	}
 }
