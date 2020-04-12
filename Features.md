@@ -21,13 +21,4 @@
    - Task 2: Add functionality to merges option
    - Task 3: Update other commands that implement rebase command
    - Task 4: Update docs to show --preserve-merges
-   
-  #### Story E - Add "-help" option to common commands
-   - Task 1: Add "-help" option to fetch command that outputs the usage and options.
-   - Task 2: Add "-help" option to merge command that outputs the usage and options.
-   - Task 3: Add "-help" option to push command that outputs the usage and options.
-   - Task 4: Add "-help" option to pull command that outputs the usage and options.
-   - Task 5: Add "-help" option to add command that outputs the usage and options.
-   - Task 6: Add "-help" option to clone command that outputs the usage and options.
-   - Task 7: Add "-help" option to commit command that outputs the usage and options.
-   - Task 8: Add "-help" option to branch command that outputs the usage and options.
+  
