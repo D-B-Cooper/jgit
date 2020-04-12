@@ -17,14 +17,3 @@
   #### User Story D - As a JGit user, I want to be able to utilize the "merges" option on rebase, so I do not need to use the depreciated alternative.
    - Req. 3.0: The JGit rebase implementation shall include the merges option
    - Req. 3.1: JGit commands that implement the rebase option shall include the merges option
-
-  #### User Story E - As a JGit command line user, I want to be able to use a help option of common commands, so I am able to see usages and possible options.
-   - Req. 4.0: The JGit CLI shall include a "-help" for common commands containing usage and options.
-   - Req. 4.1: The JGit CLI fetch command shall include a "-help" option that outputs usage and options.
-   - Req. 4.2: The JGit CLI merge command shall include a "-help" option that outputs usage and options.
-   - Req. 4.3: The JGit CLI push command shall include a "-help" option that outputs usage and options.
-   - Req. 4.4: The JGit CLI pull command shall include a "-help" option that outputs usage and options.
-   - Req. 4.5: The JGit CLI add command shall include a "-help" option that outputs usage and options.
-   - Req. 4.6: The JGit CLI clone command shall include a "-help" option that outputs usage and options.
-   - Req. 4.7: The JGit CLI commit command shall include a "-help" option that outputs usage and options.
-   - Req. 4.8: The JGit CLI branch command shall include a "-help" option that outputs usage and options.
