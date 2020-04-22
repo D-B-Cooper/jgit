@@ -1,0 +1,1 @@
+This is to declare that I am using Waterfall for this project structure.
