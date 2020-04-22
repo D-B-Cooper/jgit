@@ -1,6 +1,6 @@
 ## Software Requirements
 ### Functional Requirements
-  #### User Story A - As a JGit command line user, I want to be able to use a pull command, so I do not need to use fetch and merge separately
+  #### User Story A - As a JGit command line user, I want to be able to use a pull command, so I do not need to use fetch and merge separately (REF: https://git-scm.com/docs/git-pull )
    - Req. 1.0: The executable JGit CLI shall include a pull command.
    - Req. 1.1: The JGit CLI pull command shall accept specified remote and remote branch names.
    - Req. 1.2: The JGit CLI pull command shall accept a test option that outputs additional options and output from command.
@@ -8,12 +8,12 @@
    - Req. 1.4: The JGit CLI pull command shall accept fast forward options ("--ff", "--no-ff", "--ff-only").
    - Req. 1.5: The JGit CLI pull command shall output information about the fetch and merge statuses.
 
-  #### User Story B - As a JGit command line user, I want to be able to abort an active merge, so I do not need to manually cancel a merge.
+  #### User Story B - As a JGit command line user, I want to be able to abort an active merge, so I do not need to manually cancel a merge. (REF: https://git-scm.com/docs/git-merge )
    - Req. 2.0: The JGit CLI merge command shall accept an abort option to abort an active merge ("--abort").
 
-  #### User Story C - As a JGit command line user, I want to be able to continue an active merge, so I can easily proceed with a merge.
+  #### User Story C - As a JGit command line user, I want to be able to continue an active merge, so I can easily proceed with a merge. (REF: https://git-scm.com/docs/git-merge )
    - Req. 2.1: The JGit CLI merge command shall accept a continue option to continue with an in progress merge ("--continue").
   
-  #### User Story D - As a JGit user, I want to be able to utilize the "merges" option on rebase, so I do not need to use the depreciated alternative.
+  #### User Story D - As a JGit user, I want to be able to utilize the "merges" option on rebase, so I do not need to use the depreciated alternative.  (REF: https://git-scm.com/docs/git-rebase )
    - Req. 3.0: The JGit rebase implementation shall include the merges option
    - Req. 3.1: JGit commands that implement the rebase option shall include the merges option
