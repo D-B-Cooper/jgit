@@ -35,6 +35,15 @@ import org.kohsuke.args4j.Option;
 @Command(common = true, usage = "usage_MergesTwoDevelopmentHistories")
 class Merge extends TextBuiltin {
 
+	/**
+	 * Option to abort an active merge. Default to false
+	 *
+	 * References: Req. 2.0
+	 *
+	 */
+	@Option(name = "--abort", aliases = { "-s" }, usage = "usage_mergeStrategy")
+	private boolean abort = false;
+
 	@Option(name = "--strategy", aliases = { "-s" }, usage = "usage_mergeStrategy")
 	private String strategyName;
 
@@ -72,6 +81,16 @@ class Merge extends TextBuiltin {
 	/** {@inheritDoc} */
 	@Override
 	protected void run() {
+		if (abort) {
+			try {
+				if (abortActiveMerge())
+					return;
+			} catch (Exception e) {
+				// Print out exception
+			}
+			return;
+		}
+
 		if (squash && ff == FastForwardMode.NO_FF) {
 			throw die(CLIText.get().cannotCombineSquashWithNoff);
 		}
@@ -189,6 +208,11 @@ class Merge extends TextBuiltin {
 			throw die(e.getMessage(), e);
 		}
 
+	}
+
+	private boolean abortActiveMerge() {
+		// TODO Add logic to cancel active merge, and return true if successful
+		return true;
 	}
 
 	private Ref getOldHead() throws IOException {
