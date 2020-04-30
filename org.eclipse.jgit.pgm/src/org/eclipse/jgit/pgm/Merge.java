@@ -24,6 +24,7 @@ import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.pgm.internal.CLIText;
@@ -39,9 +40,8 @@ class Merge extends TextBuiltin {
 	 * Option to abort an active merge. Default to false
 	 *
 	 * References: Req. 2.0
-	 *
 	 */
-	@Option(name = "--abort", aliases = { "-s" }, usage = "usage_mergeStrategy")
+	@Option(name = "--abort", usage = "usage_mergeAbort")
 	private boolean abort = false;
 
 	@Option(name = "--strategy", aliases = { "-s" }, usage = "usage_mergeStrategy")
@@ -55,7 +55,7 @@ class Merge extends TextBuiltin {
 
 	private MergeStrategy mergeStrategy = MergeStrategy.RECURSIVE;
 
-	@Argument(required = true, metaVar = "metaVar_ref", usage = "usage_mergeRef")
+	@Argument(metaVar = "metaVar_ref", usage = "usage_mergeRef")
 	private String ref;
 
 	private FastForwardMode ff = FastForwardMode.FF;
@@ -86,8 +86,16 @@ class Merge extends TextBuiltin {
 				if (abortActiveMerge())
 					return;
 			} catch (Exception e) {
-				// Print out exception
+				System.out.println(e.toString());
 			}
+
+			return;
+		}
+
+		// If ref is empty, print message and escape
+		if (ref == null) {
+			System.out.println(
+					"You must specify a branch to merge. For help use --help option.");
 			return;
 		}
 
@@ -210,8 +218,20 @@ class Merge extends TextBuiltin {
 
 	}
 
-	private boolean abortActiveMerge() {
-		// TODO Add logic to cancel active merge, and return true if successful
+	/**
+	 * Aborts an active merge in the repository, if one exists.
+	 *
+	 * References: Req. 2.0
+	 *
+	 * @return True if merge was successfully aborted
+	 * @throws Exception
+	 *             If no active merge
+	 */
+	private boolean abortActiveMerge() throws Exception {
+		if (db.getRepositoryState() != RepositoryState.MERGING)
+			throw new Exception("No active merge to abort");
+
+		// TODO add logic to abort the merge
 		return true;
 	}
 
