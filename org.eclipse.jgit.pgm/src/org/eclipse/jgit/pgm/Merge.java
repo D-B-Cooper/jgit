@@ -18,6 +18,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.AnyObjectId;
@@ -86,9 +87,8 @@ class Merge extends TextBuiltin {
 				if (abortActiveMerge())
 					return;
 			} catch (Exception e) {
-				System.out.println(e.toString());
+				System.out.println(e.getMessage());
 			}
-
 			return;
 		}
 
@@ -225,14 +225,40 @@ class Merge extends TextBuiltin {
 	 *
 	 * @return True if merge was successfully aborted
 	 * @throws Exception
-	 *             If no active merge
+	 *             If no active merge, or merge abort fails
 	 */
 	private boolean abortActiveMerge() throws Exception {
+		// TODO Remove testing printout
+		System.out.println("Precheck: ");
+		try {
+			System.out.println(
+					"Merge Commit Message: " + db.readMergeCommitMsg());
+		} catch (Exception e) {
+			System.out.println("Merge Commit Message:  Not found");
+		}
+		try {
+			System.out.println("readCommitEditMsg: " + db.readCommitEditMsg());
+		} catch (Exception e) {
+			System.out.println("readCommitEditMsg: Not found");
+		}
+		try {
+			System.out.println(
+					"readSquashCommitMsg: " + db.readSquashCommitMsg());
+		} catch (Exception e) {
+			System.out.println("readSquashCommitMsg: Not found");
+		}
+
 		if (db.getRepositoryState() != RepositoryState.MERGING)
 			throw new Exception("No active merge to abort");
 
-		// TODO add logic to abort the merge
-		return true;
+		try {
+			Git.wrap(db).reset().setMode(ResetType.HARD).call();
+			if (db.getRepositoryState() == RepositoryState.MERGING)
+				return false;
+			return true;
+		} catch (Exception e) {
+			throw new Exception(e);
+		}
 	}
 
 	private Ref getOldHead() throws IOException {
