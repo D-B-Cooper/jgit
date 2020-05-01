@@ -84,18 +84,21 @@ class Merge extends TextBuiltin {
 	protected void run() {
 		if (abort) {
 			try {
-				if (abortActiveMerge())
+				if (abortActiveMerge()) {
+					System.out.println(CLIText.get().mergeAborted);
 					return;
+				}
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
+				System.out.println(CLIText.get().useHelpCommand);
 			}
 			return;
 		}
 
 		// If ref is empty, print message and escape
 		if (ref == null) {
-			System.out.println(
-					"You must specify a branch to merge. For help use --help option.");
+			System.out.println(CLIText.get().mergeSpecifyBranch);
+			System.out.println(CLIText.get().useHelpCommand);
 			return;
 		}
 
@@ -227,29 +230,11 @@ class Merge extends TextBuiltin {
 	 * @throws Exception
 	 *             If no active merge, or merge abort fails
 	 */
+	@SuppressWarnings("nls")
 	private boolean abortActiveMerge() throws Exception {
-		// TODO Remove testing printout
-		System.out.println("Precheck: ");
-		try {
-			System.out.println(
-					"Merge Commit Message: " + db.readMergeCommitMsg());
-		} catch (Exception e) {
-			System.out.println("Merge Commit Message:  Not found");
-		}
-		try {
-			System.out.println("readCommitEditMsg: " + db.readCommitEditMsg());
-		} catch (Exception e) {
-			System.out.println("readCommitEditMsg: Not found");
-		}
-		try {
-			System.out.println(
-					"readSquashCommitMsg: " + db.readSquashCommitMsg());
-		} catch (Exception e) {
-			System.out.println("readSquashCommitMsg: Not found");
-		}
 
 		if (db.getRepositoryState() != RepositoryState.MERGING)
-			throw new Exception("No active merge to abort");
+			throw new Exception("There is no active merge");
 
 		try {
 			Git.wrap(db).reset().setMode(ResetType.HARD).call();
@@ -257,7 +242,8 @@ class Merge extends TextBuiltin {
 				return false;
 			return true;
 		} catch (Exception e) {
-			throw new Exception(e);
+			System.out.println(e.toString());
+			return false;
 		}
 	}
 
