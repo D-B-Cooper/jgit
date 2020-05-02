@@ -251,7 +251,7 @@ class Pull extends TextBuiltin {
 				.getTrackingRefUpdates()) {
 			final String src = abbreviateRef(u.getRemoteName(), false);
 			final String dst = abbreviateRef(u.getLocalName(), true);
-			outw.format("	%-10s -> %s", src, dst);
+			outw.format("	%-10s -> %s", src, dst); //$NON-NLS-1$
 			outw.println();
 		}
 
@@ -569,41 +569,51 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be examined and printed out
 	 * @throws IOException
 	 */
+	@SuppressWarnings("boxing")
 	private void printTest(final PullResult results) throws IOException {
 		outw.println(
-				"\n***************** Pull Result Options ***************\n");
+				CLIText.get().test_PullOptionsHeader);
 
-		outw.println("Pull Results Successful:  " + results.isSuccessful());
+		outw.println(
+				MessageFormat.format(CLIText.get().test_PullResultsSuccessful,
+						results.isSuccessful()));
 
 		if (results.toString() != null)
-			outw.println("ToString:  " + results.toString());
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					results.toString()));
 		else
-			outw.println("ToString:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					CLIText.get().returnedNull));
 
 		if (results.getFetchResult() != null)
 			outw.println(
-					"Fetch Result:  " + results.getFetchResult().toString());
+					MessageFormat.format(CLIText.get().fetchResults,
+							results.getFetchResult().toString()));
 		else
-			outw.println("Fetch Result:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().fetchResults,
+					CLIText.get().returnedNull));
 
 		if (results.getFetchedFrom() != null)
-			outw.println("Fetched From:  " + results.getFetchedFrom());
+			outw.println(MessageFormat.format(CLIText.get().fetchedFrom, results.getFetchedFrom()));
 		else
-			outw.println("Fetched From:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().fetchedFrom, CLIText.get().returnedNull));
 
 		if (results.getMergeResult() != null)
-			outw.println(
-					"Merge Result:  " + results.getMergeResult().toString());
+			outw.println(MessageFormat.format(CLIText.get().mergeResult,
+					results.getMergeResult().toString()));
 		else
-			outw.println("Merge Result:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().mergeResult,
+					CLIText.get().returnedNull));
 
 		if (results.getRebaseResult() != null)
 			outw.println(
-					"Rebase Result: " + results.getRebaseResult().toString());
+					MessageFormat.format(CLIText.get().rebaseResult,
+							results.getRebaseResult().toString()));
 		else
-			outw.println("Rebase Result: NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().rebaseResult,
+					CLIText.get().returnedNull));
 
-		outw.println(
-				"\n*****************************************************\n\n");
+
+		outw.println(CLIText.get().test_Footer);
 	}
 }

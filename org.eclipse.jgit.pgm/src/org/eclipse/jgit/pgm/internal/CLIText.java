@@ -316,6 +316,11 @@ public class CLIText extends TranslationBundle {
 	/***/ public String remote;
 	/***/ public String noRemote;
 	/***/ public String toString;
-	public String test_InternalRefVar;
-	public String fastForwardMode;
+	/***/ public String test_InternalRefVar;
+	/***/ public String fastForwardMode;
+	/***/ public String test_PullOptionsHeader;
+	/***/ public String test_PullResultsSuccessful;
+	/***/ public String fetchResults;
+	/***/ public String fetchedFrom;
+	/***/ public String mergeResult;
 }
