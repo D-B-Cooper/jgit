@@ -1,4 +1,17 @@
+# CEG 4110 Information
+
+My project was to add to the JGit software. Because of how the project is setup, please use the branch named "4110Master" as the project master.
+
+This project takes a while to get set up in a way that it can be run. However, my project only adds to the JGit command line functionality. Because of this, I added the excecutable file to the home folder of the project. It is just called "jgit". To run, use "./jgit" if you are in the same folder. I suggest using git bash.
+
+If you would like to compile the program yourself, use the guide at the bottom of the original README file. 
+
+Reference Tests.md for test cases.
+
+To compile the executable file, go to __org.eclipse.jgit.pgm__ and run the command "mvn clean install -Dmaven.javadoc.skip=true". Then the executable file will be in the target folder.
+
 # Java Git
+
 
 An implementation of the Git version control system in pure Java.
 
