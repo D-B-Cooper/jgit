@@ -234,7 +234,6 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be printed
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void printPullResult(final PullResult results) throws IOException {
 		if (showTest)
 			printTest(results);
@@ -252,7 +251,7 @@ class Pull extends TextBuiltin {
 				.getTrackingRefUpdates()) {
 			final String src = abbreviateRef(u.getRemoteName(), false);
 			final String dst = abbreviateRef(u.getLocalName(), true);
-			outw.format("	%-10s -> %s", src, dst);
+			outw.format("	%-10s -> %s", src, dst); //$NON-NLS-1$
 			outw.println();
 		}
 
@@ -260,7 +259,8 @@ class Pull extends TextBuiltin {
 		try {
 			printMergeResults(results.getMergeResult());
 		} catch (Exception e) {
-			outw.println("Error: " + e.toString());
+			outw.println(
+					MessageFormat.format(CLIText.get().error, e.toString()));
 		}
 	}
 
@@ -274,20 +274,19 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be printed
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void getPullErrors(final PullResult results) throws IOException {
 
 		if (results.getFetchResult().getURI() != null)
 			outw.println(MessageFormat.format(CLIText.get().fromURI,
 					results.getFetchResult().getURI().toString()));
 		else
-			outw.println("No URI found for Fetch Result\n");
+			outw.println(CLIText.get().noURIFound);
 		try {
 		for (TrackingRefUpdate u : results.getFetchResult()
 				.getTrackingRefUpdates()) {
 			final String src = abbreviateRef(u.getRemoteName(), false);
 			final String dst = abbreviateRef(u.getLocalName(), true);
-			outw.format(" %-10s -> %s", src, dst);
+				outw.format(" %-10s -> %s", src, dst); //$NON-NLS-1$
 			outw.println();
 		}
 		} catch (Exception e) {
@@ -319,40 +318,40 @@ class Pull extends TextBuiltin {
 	 * @param result
 	 *            RebaseResult to be referenced
 	 */
-	@SuppressWarnings("nls")
 	private void printRebaseResult(RebaseResult result) {
 		switch (result.getStatus()) {
 		case OK:
-			System.out.println("Rebase Successful");
+			System.out.println(CLIText.get().rebaseSuccessful);
 			break;
 		case ABORTED:
-			System.out.println("Rebase Aborted");
+			System.out.println(CLIText.get().rebaseAborted);
 			break;
 		case CONFLICTS:
-			System.out.println("Conflict in files:" + result.getConflicts());
+			System.out.println(MessageFormat.format(
+					CLIText.get().conflictInFile, result.getConflicts()));
 			break;
 		case FAILED:
-			System.out.println("Rebase failed; the original HEAD was restored");
+			System.out.println(CLIText.get().rebaseFailed);
 			break;
 		case NOTHING_TO_COMMIT:
-			System.out.println("There is nothing to commit");
+			System.out.println(CLIText.get().nothingToCommit);
 			break;
 		case STOPPED:
 			System.out.println(
-					"Rebase stopped due to a conflict; must either abort or resolve or skip");
+					CLIText.get().rebaseStopped);
 			break;
 		case UNCOMMITTED_CHANGES:
 			System.out.println(
-					"The repository contains uncommitted changes and the rebase is not a fast-forward");
+					CLIText.get().rebaseUncommitedChanges);
 			break;
 		case UP_TO_DATE:
 			System.out.println(CLIText.get().alreadyUpToDate);
 			break;
 		default:
 			System.out
-					.println("Rebase result: " + result.getStatus().toString());
+					.println(MessageFormat.format(CLIText.get().rebaseResult,
+							result.getStatus().toString()));
 			break;
-
 		}
 	}
 
@@ -485,61 +484,79 @@ class Pull extends TextBuiltin {
 	 *            PullCommand to be examined and printed out
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void printTest(final PullCommand pull) throws IOException {
-		outw.println(
-				"\n***************** Pull Command Details ***************\n");
+		outw.println(CLIText.get().test_PullHeader);
 
 		StringBuilder enteredOptions = new StringBuilder();
-		enteredOptions.append("****** Entered Options *****\n");
+		enteredOptions.append(CLIText.get().test_EnteredOptionsHeader);
 		if (remote != null)
-			enteredOptions.append("Remote:  " + remote + ";  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().test_Remote, remote));
 		else
-			enteredOptions.append("Remote:  !RETURNED NULL;  ");
+			enteredOptions.append(MessageFormat
+					.format(CLIText.get().test_Remote,
+							CLIText.get().returnedNull));
 
 		if (remoteBranchName != null)
 			enteredOptions
-					.append("Remote Branch:  " + remoteBranchName + ";  ");
+					.append(MessageFormat.format(
+							CLIText.get().test_RemoteBranch,
+							remoteBranchName));
 		else
-			enteredOptions.append(
-					"Remote Branch:  !RETURNED NULL, default will be used;  ");
+			enteredOptions.append(MessageFormat
+					.format(CLIText.get().test_RemoteBranch,
+							(CLIText.get().returnedNull + ", " //$NON-NLS-1$
+									+ CLIText.get().defaultWillBeUsed)));
 
 		if (pullRebaseMode.toString() != null)
 			enteredOptions
-					.append("Rebase Mode: " + pullRebaseMode.toString() + "; ");
+					.append(MessageFormat.format(CLIText.get().test_RebaseMode,
+							pullRebaseMode.toString()));
+
 		else
-			enteredOptions.append("Rebase Mode: !RETURNED NULL; ");
+			enteredOptions.append(MessageFormat.format(
+					CLIText.get().test_RebaseMode, CLIText.get().returnedNull));
 
 		if (ff != null)
-			enteredOptions
-					.append("Fast Forward Mode:  " + ff.toString() + ";  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().fastForwardMode,
+							ff.toString()));
 		else
-			enteredOptions.append("Fast Forward Mode:  !RETURNED NULL;  ");
+			enteredOptions.append(MessageFormat.format(
+					CLIText.get().fastForwardMode, CLIText.get().returnedNull));
 
 		if (ref != null)
-			enteredOptions.append("Internal ref Variable:  " + ref + ";  ");
+			enteredOptions.append(
+				MessageFormat.format(CLIText.get().test_InternalRefVar,
+							ref));
 		else
-			enteredOptions.append("Internal ref Variable:  !RETURNED NULL;  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().test_InternalRefVar,
+							CLIText.get().returnedNull));
 
-		enteredOptions.append("\n\n****************************\n");
+		enteredOptions.append(CLIText.get().test_Footer);
 
 		outw.println(enteredOptions.toString());
 
 		if (pull.toString() != null)
-			outw.println("To String:  " + pull.toString());
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					pull.toString()));
 
 		if (pull.getRemote() != null)
-			outw.println("Remote:  " + pull.getRemote());
+			outw.println(MessageFormat.format(CLIText.get().remote,
+					pull.getRemote()));
 		else
-			outw.println("Remote: NO REMOTE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().remote,
+					CLIText.get().noRemote));
 
 		if (pull.getRemoteBranchName() != null)
-			outw.println("Remote Branch:   " + pull.getRemoteBranchName());
+			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
+					pull.getRemoteBranchName()));
 		else
-			outw.println("Remote Branch:  NO REMOTE BRANCH FOUND");
+			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
+					CLIText.get().noRemoteBranchFound));
 
-		outw.println(
-				"\n*****************************************************\n\n");
+		outw.println(CLIText.get().test_Footer);
 	}
 
 	/**
@@ -552,42 +569,51 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be examined and printed out
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
+	@SuppressWarnings("boxing")
 	private void printTest(final PullResult results) throws IOException {
 		outw.println(
-				"\n***************** Pull Result Options ***************\n");
+				CLIText.get().test_PullOptionsHeader);
 
-		outw.println("Pull Results Successful:  " + results.isSuccessful());
+		outw.println(
+				MessageFormat.format(CLIText.get().test_PullResultsSuccessful,
+						results.isSuccessful()));
 
 		if (results.toString() != null)
-			outw.println("ToString:  " + results.toString());
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					results.toString()));
 		else
-			outw.println("ToString:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					CLIText.get().returnedNull));
 
 		if (results.getFetchResult() != null)
 			outw.println(
-					"Fetch Result:  " + results.getFetchResult().toString());
+					MessageFormat.format(CLIText.get().fetchResults,
+							results.getFetchResult().toString()));
 		else
-			outw.println("Fetch Result:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().fetchResults,
+					CLIText.get().returnedNull));
 
 		if (results.getFetchedFrom() != null)
-			outw.println("Fetched From:  " + results.getFetchedFrom());
+			outw.println(MessageFormat.format(CLIText.get().fetchedFrom, results.getFetchedFrom()));
 		else
-			outw.println("Fetched From:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().fetchedFrom, CLIText.get().returnedNull));
 
 		if (results.getMergeResult() != null)
-			outw.println(
-					"Merge Result:  " + results.getMergeResult().toString());
+			outw.println(MessageFormat.format(CLIText.get().mergeResult,
+					results.getMergeResult().toString()));
 		else
-			outw.println("Merge Result:   NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().mergeResult,
+					CLIText.get().returnedNull));
 
 		if (results.getRebaseResult() != null)
 			outw.println(
-					"Rebase Result: " + results.getRebaseResult().toString());
+					MessageFormat.format(CLIText.get().rebaseResult,
+							results.getRebaseResult().toString()));
 		else
-			outw.println("Rebase Result: NONE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().rebaseResult,
+					CLIText.get().returnedNull));
 
-		outw.println(
-				"\n*****************************************************\n\n");
+
+		outw.println(CLIText.get().test_Footer);
 	}
 }
