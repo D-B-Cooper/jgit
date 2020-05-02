@@ -234,7 +234,6 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be printed
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void printPullResult(final PullResult results) throws IOException {
 		if (showTest)
 			printTest(results);
@@ -260,7 +259,8 @@ class Pull extends TextBuiltin {
 		try {
 			printMergeResults(results.getMergeResult());
 		} catch (Exception e) {
-			outw.println("Error: " + e.toString());
+			outw.println(
+					MessageFormat.format(CLIText.get().error, e.toString()));
 		}
 	}
 
@@ -274,7 +274,6 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be printed
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void getPullErrors(final PullResult results) throws IOException {
 
 		if (results.getFetchResult().getURI() != null)
@@ -319,40 +318,40 @@ class Pull extends TextBuiltin {
 	 * @param result
 	 *            RebaseResult to be referenced
 	 */
-	@SuppressWarnings("nls")
 	private void printRebaseResult(RebaseResult result) {
 		switch (result.getStatus()) {
 		case OK:
-			System.out.println("Rebase Successful");
+			System.out.println(CLIText.get().rebaseSuccessful);
 			break;
 		case ABORTED:
-			System.out.println("Rebase Aborted");
+			System.out.println(CLIText.get().rebaseAborted);
 			break;
 		case CONFLICTS:
-			System.out.println("Conflict in files:" + result.getConflicts());
+			System.out.println(MessageFormat.format(
+					CLIText.get().conflictInFile, result.getConflicts()));
 			break;
 		case FAILED:
-			System.out.println("Rebase failed; the original HEAD was restored");
+			System.out.println(CLIText.get().rebaseFailed);
 			break;
 		case NOTHING_TO_COMMIT:
-			System.out.println("There is nothing to commit");
+			System.out.println(CLIText.get().nothingToCommit);
 			break;
 		case STOPPED:
 			System.out.println(
-					"Rebase stopped due to a conflict; must either abort or resolve or skip");
+					CLIText.get().rebaseStopped);
 			break;
 		case UNCOMMITTED_CHANGES:
 			System.out.println(
-					"The repository contains uncommitted changes and the rebase is not a fast-forward");
+					CLIText.get().rebaseUncommitedChanges);
 			break;
 		case UP_TO_DATE:
 			System.out.println(CLIText.get().alreadyUpToDate);
 			break;
 		default:
 			System.out
-					.println("Rebase result: " + result.getStatus().toString());
+					.println(MessageFormat.format(CLIText.get().rebaseResult,
+							result.getStatus().toString()));
 			break;
-
 		}
 	}
 
@@ -485,7 +484,6 @@ class Pull extends TextBuiltin {
 	 *            PullCommand to be examined and printed out
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void printTest(final PullCommand pull) throws IOException {
 		outw.println(
 				"\n***************** Pull Command Details ***************\n");

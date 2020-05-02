@@ -293,4 +293,13 @@ public class CLIText extends TranslationBundle {
 	/***/ public String mergeSpecifyBranch;
 	/***/ public String useHelpCommand;
 	/***/ public String mergeAborted;
+	/***/ public String error;
+	/***/ public String rebaseSuccessful;
+	/***/ public String rebaseAborted;
+	/***/ public String conflictInFile;
+	/***/ public String rebaseResult;
+	/***/ public String rebaseUncommitedChanges;
+	/***/ public String rebaseStopped;
+	/***/ public String nothingToCommit;
+	/***/ public String rebaseFailed;
 }
