@@ -302,4 +302,20 @@ public class CLIText extends TranslationBundle {
 	/***/ public String rebaseStopped;
 	/***/ public String nothingToCommit;
 	/***/ public String rebaseFailed;
+	/***/ public String noURIFound;
+	/***/ public String test_PullHeader;
+	/***/ public String test_EnteredOptionsHeader;
+	/***/ public String test_Remote;
+	/***/ public String returnedNull;
+	/***/ public String test_RemoteBranch;
+	/***/ public String defaultWillBeUsed;
+	/***/ public String test_RebaseMode;
+	/***/ public String test_Footer;
+	/***/ public String remoteBranch;
+	/***/ public String noRemoteBranchFound;
+	/***/ public String remote;
+	/***/ public String noRemote;
+	/***/ public String toString;
+	public String test_InternalRefVar;
+	public String fastForwardMode;
 }

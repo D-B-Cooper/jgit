@@ -280,13 +280,13 @@ class Pull extends TextBuiltin {
 			outw.println(MessageFormat.format(CLIText.get().fromURI,
 					results.getFetchResult().getURI().toString()));
 		else
-			outw.println("No URI found for Fetch Result\n");
+			outw.println(CLIText.get().noURIFound);
 		try {
 		for (TrackingRefUpdate u : results.getFetchResult()
 				.getTrackingRefUpdates()) {
 			final String src = abbreviateRef(u.getRemoteName(), false);
 			final String dst = abbreviateRef(u.getLocalName(), true);
-			outw.format(" %-10s -> %s", src, dst);
+				outw.format(" %-10s -> %s", src, dst); //$NON-NLS-1$
 			outw.println();
 		}
 		} catch (Exception e) {
@@ -485,59 +485,78 @@ class Pull extends TextBuiltin {
 	 * @throws IOException
 	 */
 	private void printTest(final PullCommand pull) throws IOException {
-		outw.println(
-				"\n***************** Pull Command Details ***************\n");
+		outw.println(CLIText.get().test_PullHeader);
 
 		StringBuilder enteredOptions = new StringBuilder();
-		enteredOptions.append("****** Entered Options *****\n");
+		enteredOptions.append(CLIText.get().test_EnteredOptionsHeader);
 		if (remote != null)
-			enteredOptions.append("Remote:  " + remote + ";  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().test_Remote, remote));
 		else
-			enteredOptions.append("Remote:  !RETURNED NULL;  ");
+			enteredOptions.append(MessageFormat
+					.format(CLIText.get().test_Remote,
+							CLIText.get().returnedNull));
 
 		if (remoteBranchName != null)
 			enteredOptions
-					.append("Remote Branch:  " + remoteBranchName + ";  ");
+					.append(MessageFormat.format(
+							CLIText.get().test_RemoteBranch,
+							remoteBranchName));
 		else
-			enteredOptions.append(
-					"Remote Branch:  !RETURNED NULL, default will be used;  ");
+			enteredOptions.append(MessageFormat
+					.format(CLIText.get().test_RemoteBranch,
+							(CLIText.get().returnedNull + ", " //$NON-NLS-1$
+									+ CLIText.get().defaultWillBeUsed)));
 
 		if (pullRebaseMode.toString() != null)
 			enteredOptions
-					.append("Rebase Mode: " + pullRebaseMode.toString() + "; ");
+					.append(MessageFormat.format(CLIText.get().test_RebaseMode,
+							pullRebaseMode.toString()));
+
 		else
-			enteredOptions.append("Rebase Mode: !RETURNED NULL; ");
+			enteredOptions.append(MessageFormat.format(
+					CLIText.get().test_RebaseMode, CLIText.get().returnedNull));
 
 		if (ff != null)
-			enteredOptions
-					.append("Fast Forward Mode:  " + ff.toString() + ";  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().fastForwardMode,
+							ff.toString()));
 		else
-			enteredOptions.append("Fast Forward Mode:  !RETURNED NULL;  ");
+			enteredOptions.append(MessageFormat.format(
+					CLIText.get().fastForwardMode, CLIText.get().returnedNull));
 
 		if (ref != null)
-			enteredOptions.append("Internal ref Variable:  " + ref + ";  ");
+			enteredOptions.append(
+				MessageFormat.format(CLIText.get().test_InternalRefVar,
+							ref));
 		else
-			enteredOptions.append("Internal ref Variable:  !RETURNED NULL;  ");
+			enteredOptions.append(
+					MessageFormat.format(CLIText.get().test_InternalRefVar,
+							CLIText.get().returnedNull));
 
-		enteredOptions.append("\n\n****************************\n");
+		enteredOptions.append(CLIText.get().test_Footer);
 
 		outw.println(enteredOptions.toString());
 
 		if (pull.toString() != null)
-			outw.println("To String:  " + pull.toString());
+			outw.println(MessageFormat.format(CLIText.get().toString,
+					pull.toString()));
 
 		if (pull.getRemote() != null)
-			outw.println("Remote:  " + pull.getRemote());
+			outw.println(MessageFormat.format(CLIText.get().remote,
+					pull.getRemote()));
 		else
-			outw.println("Remote: NO REMOTE FOUND");
+			outw.println(MessageFormat.format(CLIText.get().remote,
+					CLIText.get().noRemote));
 
 		if (pull.getRemoteBranchName() != null)
-			outw.println("Remote Branch:   " + pull.getRemoteBranchName());
+			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
+					pull.getRemoteBranchName()));
 		else
-			outw.println("Remote Branch:  NO REMOTE BRANCH FOUND");
+			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
+					CLIText.get().noRemoteBranchFound));
 
-		outw.println(
-				"\n*****************************************************\n\n");
+		outw.println(CLIText.get().test_Footer);
 	}
 
 	/**
@@ -550,7 +569,6 @@ class Pull extends TextBuiltin {
 	 *            PullResult to be examined and printed out
 	 * @throws IOException
 	 */
-	@SuppressWarnings("nls")
 	private void printTest(final PullResult results) throws IOException {
 		outw.println(
 				"\n***************** Pull Result Options ***************\n");
