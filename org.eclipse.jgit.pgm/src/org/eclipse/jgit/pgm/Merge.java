@@ -18,12 +18,14 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.pgm.internal.CLIText;
@@ -34,6 +36,14 @@ import org.kohsuke.args4j.Option;
 
 @Command(common = true, usage = "usage_MergesTwoDevelopmentHistories")
 class Merge extends TextBuiltin {
+
+	/**
+	 * Option to abort an active merge. Default to false
+	 *
+	 * References: Req. 2.0
+	 */
+	@Option(name = "--abort", usage = "usage_mergeAbort")
+	private boolean abort = false;
 
 	@Option(name = "--strategy", aliases = { "-s" }, usage = "usage_mergeStrategy")
 	private String strategyName;
@@ -46,7 +56,7 @@ class Merge extends TextBuiltin {
 
 	private MergeStrategy mergeStrategy = MergeStrategy.RECURSIVE;
 
-	@Argument(required = true, metaVar = "metaVar_ref", usage = "usage_mergeRef")
+	@Argument(metaVar = "metaVar_ref", usage = "usage_mergeRef")
 	private String ref;
 
 	private FastForwardMode ff = FastForwardMode.FF;
@@ -72,6 +82,26 @@ class Merge extends TextBuiltin {
 	/** {@inheritDoc} */
 	@Override
 	protected void run() {
+		if (abort) {
+			try {
+				if (abortActiveMerge()) {
+					System.out.println(CLIText.get().mergeAborted);
+					return;
+				}
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				System.out.println(CLIText.get().useHelpCommand);
+			}
+			return;
+		}
+
+		// If ref is empty, print message and escape
+		if (ref == null) {
+			System.out.println(CLIText.get().mergeSpecifyBranch);
+			System.out.println(CLIText.get().useHelpCommand);
+			return;
+		}
+
 		if (squash && ff == FastForwardMode.NO_FF) {
 			throw die(CLIText.get().cannotCombineSquashWithNoff);
 		}
@@ -189,6 +219,32 @@ class Merge extends TextBuiltin {
 			throw die(e.getMessage(), e);
 		}
 
+	}
+
+	/**
+	 * Aborts an active merge in the repository, if one exists.
+	 *
+	 * References: Req. 2.0
+	 *
+	 * @return True if merge was successfully aborted
+	 * @throws Exception
+	 *             If no active merge, or merge abort fails
+	 */
+	@SuppressWarnings("nls")
+	private boolean abortActiveMerge() throws Exception {
+
+		if (db.getRepositoryState() != RepositoryState.MERGING)
+			throw new Exception("There is no active merge");
+
+		try {
+			Git.wrap(db).reset().setMode(ResetType.HARD).call();
+			if (db.getRepositoryState() == RepositoryState.MERGING)
+				return false;
+			return true;
+		} catch (Exception e) {
+			System.out.println(e.toString());
+			return false;
+		}
 	}
 
 	private Ref getOldHead() throws IOException {

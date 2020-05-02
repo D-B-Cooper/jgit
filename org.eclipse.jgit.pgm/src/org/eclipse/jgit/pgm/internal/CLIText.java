@@ -290,4 +290,7 @@ public class CLIText extends TranslationBundle {
 	/***/ public String untrackedFiles;
 	/***/ public String updating;
 	/***/ public String usernameFor;
+	/***/ public String mergeSpecifyBranch;
+	/***/ public String useHelpCommand;
+	/***/ public String mergeAborted;
 }
