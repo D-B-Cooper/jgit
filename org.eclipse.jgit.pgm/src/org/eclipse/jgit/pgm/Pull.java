@@ -41,11 +41,17 @@ import org.eclipse.jgit.lib.Ref;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
+/**
+ * The Pull command
+ *
+ * @see <a href="http://www.kernel.org/pub/software/scm/git/docs/git-pull.html"
+ *      >Git documentation about Pull</a>
+ */
 @Command(common = true, usage = "usage_PullChangesFromRemoteRepositories")
 class Pull extends TextBuiltin {
 
 	/**
-	 * Arguement for the remote repository. Will default to origin.
+	 * Argument for the remote repository. Will default to origin.
 	 *
 	 * References: Req. 1.1
 	 */
@@ -53,7 +59,7 @@ class Pull extends TextBuiltin {
 	private String remote = Constants.DEFAULT_REMOTE_NAME;
 
 	/**
-	 * Arguement for the remote branch.
+	 * Argument for the remote branch.
 	 *
 	 * References: Req. 1.1
 	 */
@@ -118,6 +124,22 @@ class Pull extends TextBuiltin {
 	final boolean ignored) {
 		pullRebaseMode = BranchRebaseMode.NONE;
 	}
+	//
+	// /**
+	// * Argument for the rebase remote repository.
+	// *
+	// * References: Req. 1.3
+	// */
+	// @Argument(index = 2, metaVar = "metaVar_uriish")
+	// private String rebaseRemote = null;
+	//
+	// /**
+	// * Argument for the rebase remote repository.
+	// *
+	// * References: Req. 1.3
+	// */
+	// @Argument(index = 3, metaVar = "metaVar_uriish")
+	// private String rebaseRemoteBranch = null;
 
 	/**
 	 * Variable that holds the default fast forward mode.
@@ -197,30 +219,34 @@ class Pull extends TextBuiltin {
 	@Override
 	protected void run() throws IOException {
 		try (Git git = new Git(db)) {
+			// Hit with test #P1
 			PullCommand pull = git.pull();
 			pull.setRemote(remote);
 			pull.setFastForward(ff);
 			pull.setRebase(pullRebaseMode);
 
 			if (remoteBranchName != null)
-				pull.setRemoteBranchName(remoteBranchName);
+				pull.setRemoteBranchName(remoteBranchName); // Hit with test #P1
+			else
+				pull.setRemoteBranchName(db.getBranch()); // Hit with test #P2
 
 			PullResult results = pull.call();
 
 			// sets the ref variable
 			try {
+				// Hit with test #P1
 				ref = pull.getRemote() + "/" + pull.getRemoteBranchName(); //$NON-NLS-1$
 			} catch (Exception e) {
 				throw die(e.getMessage(), e);
 			}
 			if (showTest)
-				printTest(pull);
+				printTest(pull); // Hit with test #P3
 
 			printPullResult(results);
 
-
 		} catch (GitAPIException e) {
-			throw die(e.getMessage(), e);
+			throw die(e.getMessage(), e); // Hit when there is a problem with
+											// the git repo
 		}
 	}
 
@@ -236,19 +262,21 @@ class Pull extends TextBuiltin {
 	 */
 	private void printPullResult(final PullResult results) throws IOException {
 		if (showTest)
-			printTest(results);
+			printTest(results); // Hit with test #P3
 
 		if (!results.isSuccessful()) {
-			getPullErrors(results);
+			getPullErrors(results); // Hit with test #P3.5
 			return;
 		}
 
 		outw.println(MessageFormat.format(CLIText.get().fromURI,
-				results.getFetchResult().getURI().toString()));
+				results.getFetchResult().getURI().toString())); // Hit with test
+																// #P3
 
 		// Prints out a visual for the fetch path
 		for (TrackingRefUpdate u : results.getFetchResult()
 				.getTrackingRefUpdates()) {
+			// Hit with test #P2
 			final String src = abbreviateRef(u.getRemoteName(), false);
 			final String dst = abbreviateRef(u.getLocalName(), true);
 			outw.format("	%-10s -> %s", src, dst); //$NON-NLS-1$
@@ -257,6 +285,7 @@ class Pull extends TextBuiltin {
 
 		// Print Merge results
 		try {
+			// Hit with test #P1
 			printMergeResults(results.getMergeResult());
 		} catch (Exception e) {
 			outw.println(
@@ -298,14 +327,14 @@ class Pull extends TextBuiltin {
 				printMergeResults(results.getMergeResult());
 			}
 		} catch (Exception e) {
-			// Do nothing
+			// Hit with test #P5
 		}
 		try {
 			if (results.getRebaseResult() != null) {
 				printRebaseResult(results.getRebaseResult());
 			}
 		} catch (Exception e) {
-			// Do nothing
+			// Hit with test #P5
 		}
 	}
 
@@ -321,12 +350,13 @@ class Pull extends TextBuiltin {
 	private void printRebaseResult(RebaseResult result) {
 		switch (result.getStatus()) {
 		case OK:
+			// Hit with test #P7
 			System.out.println(CLIText.get().rebaseSuccessful);
 			break;
 		case ABORTED:
 			System.out.println(CLIText.get().rebaseAborted);
 			break;
-		case CONFLICTS:
+		case CONFLICTS: // Hit with test #P9.5
 			System.out.println(MessageFormat.format(
 					CLIText.get().conflictInFile, result.getConflicts()));
 			break;
@@ -344,7 +374,7 @@ class Pull extends TextBuiltin {
 			System.out.println(
 					CLIText.get().rebaseUncommitedChanges);
 			break;
-		case UP_TO_DATE:
+		case UP_TO_DATE: // Hit with test #P9.6
 			System.out.println(CLIText.get().alreadyUpToDate);
 			break;
 		default:
@@ -357,6 +387,8 @@ class Pull extends TextBuiltin {
 
 	/**
 	 * Code pulled from Merge.java
+	 *
+	 * Not used in code coverage
 	 *
 	 * Prints out messages based on the merge result. Used to get meaningful
 	 * descriptions of errors, and show success information
@@ -439,6 +471,7 @@ class Pull extends TextBuiltin {
 						CLIText.get().mergeWentWellStoppedBeforeCommitting);
 				break;
 			case ABORTED:
+				System.out.println(CLIText.get().alreadyUpToDate);
 				throw die(CLIText.get().ffNotPossibleAborting);
 			case NOT_SUPPORTED:
 				outw.println(MessageFormat.format(
@@ -451,6 +484,8 @@ class Pull extends TextBuiltin {
 
 	/**
 	 * Code pulled from Merge.java
+	 *
+	 * Not used in code coverage
 	 *
 	 * Used to check if the merge was successful
 	 *
@@ -485,19 +520,20 @@ class Pull extends TextBuiltin {
 	 * @throws IOException
 	 */
 	private void printTest(final PullCommand pull) throws IOException {
+		// Hit with test #P3
 		outw.println(CLIText.get().test_PullHeader);
 
 		StringBuilder enteredOptions = new StringBuilder();
 		enteredOptions.append(CLIText.get().test_EnteredOptionsHeader);
 		if (remote != null)
 			enteredOptions.append(
-					MessageFormat.format(CLIText.get().test_Remote, remote));
+					MessageFormat.format(CLIText.get().test_Remote, remote)); // Hit with test #P3
 		else
 			enteredOptions.append(MessageFormat
 					.format(CLIText.get().test_Remote,
 							CLIText.get().returnedNull));
 
-		if (remoteBranchName != null)
+		if (remoteBranchName != null)// Hit with test #P3
 			enteredOptions
 					.append(MessageFormat.format(
 							CLIText.get().test_RemoteBranch,
@@ -508,7 +544,7 @@ class Pull extends TextBuiltin {
 							(CLIText.get().returnedNull + ", " //$NON-NLS-1$
 									+ CLIText.get().defaultWillBeUsed)));
 
-		if (pullRebaseMode.toString() != null)
+		if (pullRebaseMode.toString() != null) // Hit with test #P3
 			enteredOptions
 					.append(MessageFormat.format(CLIText.get().test_RebaseMode,
 							pullRebaseMode.toString()));
@@ -517,15 +553,15 @@ class Pull extends TextBuiltin {
 			enteredOptions.append(MessageFormat.format(
 					CLIText.get().test_RebaseMode, CLIText.get().returnedNull));
 
-		if (ff != null)
+		if (ff != null) // Hit with test #P3
 			enteredOptions.append(
 					MessageFormat.format(CLIText.get().fastForwardMode,
 							ff.toString()));
-		else
+		else // Should never be hit; Used for posterity
 			enteredOptions.append(MessageFormat.format(
 					CLIText.get().fastForwardMode, CLIText.get().returnedNull));
 
-		if (ref != null)
+		if (ref != null) // Hit with test #P3
 			enteredOptions.append(
 				MessageFormat.format(CLIText.get().test_InternalRefVar,
 							ref));
@@ -540,23 +576,23 @@ class Pull extends TextBuiltin {
 
 		if (pull.toString() != null)
 			outw.println(MessageFormat.format(CLIText.get().toString,
-					pull.toString()));
+					pull.toString())); // Hit with test #P3
 
 		if (pull.getRemote() != null)
 			outw.println(MessageFormat.format(CLIText.get().remote,
-					pull.getRemote()));
+					pull.getRemote())); // Hit with test #P3
 		else
 			outw.println(MessageFormat.format(CLIText.get().remote,
 					CLIText.get().noRemote));
 
 		if (pull.getRemoteBranchName() != null)
 			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
-					pull.getRemoteBranchName()));
+					pull.getRemoteBranchName())); // Hit with test #P3
 		else
 			outw.println(MessageFormat.format(CLIText.get().remoteBranch,
-					CLIText.get().noRemoteBranchFound));
+					CLIText.get().noRemoteBranchFound)); // Hit with test #P6
 
-		outw.println(CLIText.get().test_Footer);
+		outw.println(CLIText.get().test_Footer); // Hit with test #P3
 	}
 
 	/**

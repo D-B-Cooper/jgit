@@ -83,20 +83,25 @@ class Merge extends TextBuiltin {
 	@Override
 	protected void run() {
 		if (abort) {
+			// Hit with test #M2
 			try {
 				if (abortActiveMerge()) {
+					// Hit with test #M3
 					System.out.println(CLIText.get().mergeAborted);
 					return;
 				}
 			} catch (Exception e) {
+				// Hit with test #M2
 				System.out.println(e.getMessage());
 				System.out.println(CLIText.get().useHelpCommand);
 			}
+			// Hit with test #M2
 			return;
 		}
 
 		// If ref is empty, print message and escape
 		if (ref == null) {
+			// Hit with test #M1
 			System.out.println(CLIText.get().mergeSpecifyBranch);
 			System.out.println(CLIText.get().useHelpCommand);
 			return;
@@ -234,13 +239,17 @@ class Merge extends TextBuiltin {
 	private boolean abortActiveMerge() throws Exception {
 
 		if (db.getRepositoryState() != RepositoryState.MERGING)
-			throw new Exception("There is no active merge");
+			throw new Exception("There is no active merge"); // Hit with test
+																// #M2
 
 		try {
+			// Hit with test #M3
 			Git.wrap(db).reset().setMode(ResetType.HARD).call();
+
 			if (db.getRepositoryState() == RepositoryState.MERGING)
 				return false;
-			return true;
+
+			return true; // Hit with test #M3
 		} catch (Exception e) {
 			System.out.println(e.toString());
 			return false;
